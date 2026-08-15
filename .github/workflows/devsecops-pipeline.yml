@@ -2,9 +2,9 @@ name: DevSecOps Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "devsecops-remediation" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "devsecops-remediation" ]
 
 jobs:
   # Stage 1: Secret Scanning
