@@ -1,0 +1,99 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # Stage 1: Secret Scanning
+  secret-scanning:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: true
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+          # We use the baseline to ignore old secrets in history
+          GITLEAKS_CONFIG: .gitleaks.toml 
+
+  # Stage 2: SAST (Static Analysis)
+  sast:
+    runs-on: ubuntu-latest
+    needs: secret-scanning
+    steps:
+      - uses: actions/checkout@v3
+      - name: Semgrep Scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "auto"
+
+  # Stage 3: SCA (Dependency Scanning)
+  sca:
+    runs-on: ubuntu-latest
+    needs: sast
+    steps:
+      - uses: actions/checkout@v3
+      - name: Trivy Dependency Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+  # Stage 4: Container Build, Scan & SBOM
+  container-security:
+    runs-on: ubuntu-latest
+    needs: sca
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Image
+        run: docker build -t secureflow-app:latest .
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'secureflow-app:latest'
+          severity: 'CRITICAL'
+          exit-code: '1'
+      - name: TODO - Generate SBOM & Sign Image
+        run: echo "Phase 3 will add Syft and Cosign here"
+
+  # Stage 5: IaC Scanning
+  iac-security:
+    runs-on: ubuntu-latest
+    needs: container-security
+    steps:
+      - uses: actions/checkout@v3
+      - name: Checkov Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          # We will filter for criticals later
+          quiet: false 
+      - name: TODO - Tune Checkov
+        run: echo "Phase 4 will tune Checkov for zero criticals"
+
+  # Stage 6: DAST (Dynamic Analysis)
+  dast:
+    runs-on: ubuntu-latest
+    needs: iac-security
+    steps:
+      - uses: actions/checkout@v3
+      - name: TODO - Run DAST
+        run: echo "Phase 7 will add OWASP ZAST here"
+
+  # Stage 7: Deploy & Runtime Security
+  deploy-runtime:
+    runs-on: ubuntu-latest
+    needs: dast
+    steps:
+      - uses: actions/checkout@v3
+      - name: TODO - Deploy with Vault & Falco
+        run: echo "Phase 6 will add Vault, Falco, and Gatekeeper checks here"

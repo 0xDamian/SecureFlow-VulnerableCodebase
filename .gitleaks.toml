@@ -1,0 +1,26 @@
+title = "SecureFlow Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "weak-placeholder-secret"
+description = "Low-entropy hardcoded secret (below default entropy threshold)"
+regex = '''(?i)(secret|password|passwd|token)\s*[:=]\s*['"]?(changeme|dev|admin|test|password|secret|default|[a-z]+123)['"]?'''
+tags = ["weak-secret"]
+
+[[rules]]
+id = "postgres-connection-string"
+description = "Postgres connection URI with embedded credentials"
+regex = '''postgres(?:ql)?://[A-Za-z0-9_.-]+:[^@\s'"]+@[A-Za-z0-9_.-]+:?\d*/[A-Za-z0-9_.-]+'''
+tags = ["database", "postgres", "critical"]
+
+[[rules]]
+id = "jwt-hardcoded-secret"
+description = "Hardcoded JWT signing secret — any literal value, entropy irrelevant"
+regex = '''(?i)jwt[_-]?secret\s*[:=]\s*['"]?[^\s'"]{4,}['"]?'''
+tags = ["jwt", "auth", "critical"]
+
+[allowlist]
+description = "Documentation describing known vulnerabilities, not live secrets"
+paths = ['''VULNERABILITIES\.md''']
