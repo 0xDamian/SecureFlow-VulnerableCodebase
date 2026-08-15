@@ -4,9 +4,9 @@ FROM python:3.12-alpine
 WORKDIR /app
 
 # Update system packages and install curl for healthcheck
-RUN apt update && apt upgrade -y && \
-    apt install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk update && apk upgrade && \
+    apk add --no-cache curl && \
+    rm -rf /var/cache/apk/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
