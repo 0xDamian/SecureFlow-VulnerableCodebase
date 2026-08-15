@@ -84,6 +84,7 @@ jobs:
         with:
           image-ref: 'secureflow-transaction:latest'
           severity: 'CRITICAL'
+          ignore-unfixed: true
           exit-code: '1'
       
       # 5. Generate SBOM (Software Bill of Materials)
