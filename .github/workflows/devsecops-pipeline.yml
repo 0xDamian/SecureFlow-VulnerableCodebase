@@ -110,9 +110,9 @@ jobs:
       - name: Push and Sign All Images
         run: |
           for svc in auth frontend transaction; do
-            docker tag secureflow-$svc:latest ghcr.io/${{ github.repository_owner }}/secureflow-$svc:latest
-            docker push ghcr.io/${{ github.repository_owner }}/secureflow-$svc:latest
-            cosign sign --yes ghcr.io/${{ github.repository_owner }}/secureflow-$svc:latest
+            docker tag secureflow-$svc:latest ghcr.io/${{ env.OWNER_LC }}/secureflow-$svc:latest
+            docker push ghcr.io/${{ env.OWNER_LC }}/secureflow-$svc:latest
+            cosign sign --yes ghcr.io/${{ env.OWNER_LC }}/secureflow-$svc:latest
           done
 
   # Stage 5: IaC Scanning
