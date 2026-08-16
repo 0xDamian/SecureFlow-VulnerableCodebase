@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ "devsecops-remediation" ]
 
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
 jobs:
   # Stage 1: Secret Scanning
   secret-scanning:
@@ -109,9 +114,17 @@ jobs:
       
       - name: Push and Sign All Images
         run: |
+          # 1. Log Docker into GHCR
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
+          # 2. Log Cosign into GHCR (Fixes the expired token issue)
+          cosign login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          
+          # 3. Push and Sign in a loop
           for svc in auth frontend transaction; do
             docker tag secureflow-$svc:latest ghcr.io/${{ env.OWNER_LC }}/secureflow-$svc:latest
             docker push ghcr.io/${{ env.OWNER_LC }}/secureflow-$svc:latest
+            # Sign immediately after push while token is fresh
             cosign sign --yes ghcr.io/${{ env.OWNER_LC }}/secureflow-$svc:latest
           done
 
