@@ -9,7 +9,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 
 # CK-02 / IV-05 fixed: Create a non-root user and switch to it
-RUN useradd -m appuser
+RUN apk add --no-cache shadow && \
+    useradd -m appuser
 USER appuser
 
 EXPOSE 5000
